@@ -7,13 +7,21 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.Threading;
+using System.Net;
+using System.IO;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 namespace wowAuctionbackground
 {
     public partial class Form1 : Form
     {
-        private Thread thread = new Thread(new ThreadStart(start));
+        private Thread thread = new Thread(new ThreadStart(threadfunc));
         static public bool stop;
-        static public void start()
+        static public string Host = "http://www.battlenet.com.cn";
+        static public string AuctionURL = "/api/wow/auction/data/";
+        static public string realmlistURL = "/api/wow/realm/status";
+        static public string realm = "激流之傲";
+        static public void threadfunc()
         {
             while (true)
             {
@@ -29,16 +37,39 @@ namespace wowAuctionbackground
 
         private void button1_Click(object sender, EventArgs e)
         {
-            //thread.Start();
-            //Console.WriteLine("{0}", thread.ThreadState);
-            if (thread.ThreadState==ThreadState.Unstarted)
-                thread.Start();
+            //if (thread.ThreadState==ThreadState.Unstarted)
+                //thread.Start();
             stop = false;
+            //Console.WriteLine(HttpGet(Host + AuctionURL + realm, ""));
+            string json=HttpGet(Host + AuctionURL + realm, "");
+            JObject jo = (JObject)JsonConvert.DeserializeObject(json);
+            mySQLHelper.open();
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
             stop = true;
+        }
+        public string HttpGet(string Url, string postDataStr)
+        {
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(Url + (postDataStr == "" ? "" : "?") + postDataStr);
+            request.Method = "GET";
+            request.ContentType = "text/html;charset=UTF-8";
+
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+            Stream myResponseStream = response.GetResponseStream();
+            StreamReader myStreamReader = new StreamReader(myResponseStream, Encoding.GetEncoding("utf-8"));
+            string retString = myStreamReader.ReadToEnd();
+            myStreamReader.Close();
+            myResponseStream.Close();
+
+            return retString;
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            string json = HttpGet(Host + realmlistURL, "");
+            JObject jo = (JObject)JsonConvert.DeserializeObject(json);
         }
     }
 }
