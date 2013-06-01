@@ -70,6 +70,10 @@ namespace wowAuctionbackground
         {
             string json = HttpGet(Host + realmlistURL, "");
             JObject jo = (JObject)JsonConvert.DeserializeObject(json);
+            
+            List<string> columnname=new List<string>();
+            mySQLHelper.open();
+            mySQLHelper.update((JArray)jo["realms"], columnname, "t_realmstatus","name");
         }
     }
 }
