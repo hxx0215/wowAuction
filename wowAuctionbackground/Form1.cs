@@ -74,8 +74,10 @@ namespace wowAuctionbackground
             string json = HttpGet(Host + realmlistURL, "");
             JObject jo = (JObject)JsonConvert.DeserializeObject(json);
             mySQLHelper.open();
-            int num=mySQLHelper.update((JArray)jo["realms"],  "t_realmstatus","name");
+            int num=mySQLHelper.update((JArray)jo["realms"],  "t_realmstatus");
             Console.WriteLine("获取服务器列表成功一共获取{0}个服务器", num);
+            mySQLHelper.beginn = 0;
+            mySQLHelper.succn = 0;
         }
 
         private void button4_Click(object sender, EventArgs e)
@@ -97,8 +99,10 @@ namespace wowAuctionbackground
                 JObject jo = (JObject)JsonConvert.DeserializeObject(json);
                 ((JObject)jo["files"][0]).Add("FK", dc["ID"]);
                 ((JObject)jo["files"][0]).Add("name", dc["name"]);
-                mySQLHelper.update((JArray)jo["files"], "t_auctionurl", "name");
+                mySQLHelper.update((JArray)jo["files"], "t_auctionurl");
             }
+            mySQLHelper.beginn = 0;
+            mySQLHelper.succn = 0;
             Console.WriteLine("拉取数据成功一共获取{0}个服务器AH数据", realms.Count);
         }
 
@@ -130,12 +134,29 @@ namespace wowAuctionbackground
             json = HttpGet(AuctionDataURL, "");
             jo = (JObject)JsonConvert.DeserializeObject(json);
             string addkey = mySQLHelper.getKeys((JObject)jo["realm"], "");
+            addkey += "`chnname`,`lastModified`,";
             addkey += "`side`,";
             string addValue = mySQLHelper.getValues((JObject)jo["realm"]);
+            addValue += "'" + realm + "','" + LastModified+"',";
             addValue += "'alliance',";
             string addwhere = "and `name`='" + jo["realm"]["name"] + "'";
-            int num=mySQLHelper.update((JArray)jo["alliance"]["auctions"], "t_realtimeauctiondata", "auc",addkey,addValue,addwhere);
-            Console.WriteLine("共取得{0}联盟拍卖行数据{1}条", realm, num);
+            Console.WriteLine("开始时间{0}", DateTime.Now);
+            List<string> unikey = new List<string>();
+            unikey.Add("auc"); unikey.Add("owner"); unikey.Add("item");
+            int num = mySQLHelper.update((JArray)jo["alliance"]["auctions"], "t_realtimeauctiondata",  addkey, addValue, addwhere,unikey);
+            Console.WriteLine("{2}:共取得{0}联盟拍卖行数据{1}条", realm, num,DateTime.Now);
+            addValue = mySQLHelper.getValues((JObject)jo["realm"]);
+            addValue += "'" + realm + "','" + LastModified + "',";
+            addValue += "'horde',";
+            num = mySQLHelper.update((JArray)jo["horde"]["auctions"], "t_realtimeauctiondata", addkey, addValue, addwhere, unikey);
+            Console.WriteLine("{2}:共取得{0}部落拍卖行数据{1}条", realm, num,DateTime.Now);
+            addValue = mySQLHelper.getValues((JObject)jo["realm"]);
+            addValue += "'" + realm + "','" + LastModified+"',";
+            addValue += "'neutral'";
+            num = mySQLHelper.update((JArray)jo["neutral"]["auctions"], "t_realtimeauctiondata", addkey, addValue, addwhere, unikey);
+            Console.WriteLine("{2}:共取得{0}中立拍卖行数据{1}条", realm, num, DateTime.Now);
+            mySQLHelper.beginn = 0;
+            mySQLHelper.succn = 0;
         }
     }
 }
