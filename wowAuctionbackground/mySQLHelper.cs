@@ -187,8 +187,9 @@ namespace wowAuctionbackground
             MySqlCommand c = new MySqlCommand(str.ToString(), con);
             //Console.Write("{2},begin update {0} to {1}...", updaten, tablename, DateTime.Now);
             c.ExecuteNonQuery();
-            Console.WriteLine("{1}:{0} updateSuccess!",succn,DateTime.Now);
             succn++;
+            Console.WriteLine("{1}:{0} updateSuccess!",succn-1,DateTime.Now);
+            
         }
     }
 }
