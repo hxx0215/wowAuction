@@ -11,9 +11,11 @@ namespace wowAuctionbackground
 {
     class mySQLHelper
     {
-        static private string constr = "database=wowauction;password=922033;User ID=pma;server=192.168.1.102";
+        static private string constr = "database=wowauction;password=922033;User ID=pma;server=222.69.214.114";
         static public int beginn = 0;
         static public int succn = 0;
+        static private long ilock = 0;
+        static public int totalupdate = 0;
         static public void open()
         {
             //con = new MySqlConnection(constr);
@@ -59,7 +61,7 @@ namespace wowAuctionbackground
                     SQL += cmdstr + "; ";
                     updaten++;
                 }
-                if (updaten >= 200)
+                if (updaten >= 500)
                 {
                     Console.WriteLine("{2}:begin update:{0} to {1}",beginn,tablename,DateTime.Now);
                     beginn++;
@@ -182,14 +184,27 @@ namespace wowAuctionbackground
         }
         static public void updateSQL(object str)
         {
-            MySqlConnection con = new MySqlConnection(constr);
-            con.Open();
-            MySqlCommand c = new MySqlCommand(str.ToString(), con);
-            //Console.Write("{2},begin update {0} to {1}...", updaten, tablename, DateTime.Now);
-            c.ExecuteNonQuery();
-            succn++;
-            Console.WriteLine("{1}:{0} updateSuccess!",succn-1,DateTime.Now);
-            
+            try
+            {
+                MySqlConnection con = new MySqlConnection(constr);
+                con.Open();
+                MySqlCommand c = new MySqlCommand(str.ToString(), con);
+                //Console.Write("{2},begin update {0} to {1}...", updaten, tablename, DateTime.Now);
+                int k = c.ExecuteNonQuery();
+                if (Interlocked.Read(ref ilock) == 1)
+                {
+                    Thread.Sleep(2);
+                }
+                Interlocked.Increment(ref ilock);
+                succn++;
+                totalupdate += k;
+                Console.WriteLine("{1}:{0} updateSuccess!update{2},now:{3}", succn - 1, DateTime.Now, k, totalupdate);
+                Interlocked.Decrement(ref ilock);
+            }
+            catch (Exception e)
+            {
+                int o = 1;
+            }
         }
     }
 }

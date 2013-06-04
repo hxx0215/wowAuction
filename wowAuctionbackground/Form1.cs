@@ -108,12 +108,12 @@ namespace wowAuctionbackground
 
         private void button5_Click(object sender, EventArgs e)
         {
-            //auctiontimer.AutoReset = false;
-            //auctiontimer.Elapsed+=new ElapsedEventHandler(getRealTimeAuctionData);
-            //auctiontimer.Enabled = true;
-            getRealTimeAuctionData();
+            auctiontimer.AutoReset = false;
+            auctiontimer.Elapsed+=new ElapsedEventHandler(getRealTimeAuctionData);
+            auctiontimer.Enabled = true;
+           
         }
-        public void getRealTimeAuctionData()//(object source, System.Timers.ElapsedEventArgs e)
+        public void getRealTimeAuctionData(object source, System.Timers.ElapsedEventArgs e)
         {
             string URL = Host + AuctionURL + realm;
             string json = HttpGet(URL, "");
@@ -143,18 +143,23 @@ namespace wowAuctionbackground
             Console.WriteLine("开始时间{0}", DateTime.Now);
             List<string> unikey = new List<string>();
             unikey.Add("auc"); unikey.Add("owner"); unikey.Add("item");
+            int tot = 0;
             int num = mySQLHelper.update((JArray)jo["alliance"]["auctions"], "t_realtimeauctiondata",  addkey, addValue, addwhere,unikey);
+            tot += num;
             Console.WriteLine("{2}:共取得{0}联盟拍卖行数据{1}条", realm, num,DateTime.Now);
             addValue = mySQLHelper.getValues((JObject)jo["realm"]);
             addValue += "'" + realm + "','" + LastModified + "',";
             addValue += "'horde',";
             num = mySQLHelper.update((JArray)jo["horde"]["auctions"], "t_realtimeauctiondata", addkey, addValue, addwhere, unikey);
+            tot += num;
             Console.WriteLine("{2}:共取得{0}部落拍卖行数据{1}条", realm, num,DateTime.Now);
             addValue = mySQLHelper.getValues((JObject)jo["realm"]);
             addValue += "'" + realm + "','" + LastModified+"',";
-            addValue += "'neutral'";
+            addValue += "'neutral',";
             num = mySQLHelper.update((JArray)jo["neutral"]["auctions"], "t_realtimeauctiondata", addkey, addValue, addwhere, unikey);
             Console.WriteLine("{2}:共取得{0}中立拍卖行数据{1}条", realm, num, DateTime.Now);
+            tot += num;
+            Console.WriteLine("一共上传{0}条数据", tot);
             mySQLHelper.beginn = 0;
             mySQLHelper.succn = 0;
         }
